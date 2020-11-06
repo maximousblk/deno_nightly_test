@@ -23,7 +23,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v2
         with:
-          repository: "denoland/deno"
+          repository: "maximousblk/deno"
           fetch-depth: 1 # No need for full version history
           submodules: false
 
@@ -38,8 +38,8 @@ jobs:
 
       - name: Generate Release Notes
         run: |
-          deno run -A http://denopkg.com/maximousblk/deno_nightly/.github/dated.ts -h ${{ steps.commit.outputs.hash }} -b ${{ steps.now.outputs.formattedTime }}
-          deno run -A http://denopkg.com/maximousblk/deno_nightly/.github/latest.ts -h ${{ steps.commit.outputs.hash }}
+          deno run -A http://denopkg.com/maximousblk/deno_nightly_test/.github/dated.ts -h ${{ steps.commit.outputs.hash }} -b ${{ steps.now.outputs.formattedTime }}
+          deno run -A http://denopkg.com/maximousblk/deno_nightly_test/.github/latest.ts -h ${{ steps.commit.outputs.hash }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -65,6 +65,7 @@ jobs:
     env:
       CARGO_INCREMENTAL: 0
       RUST_BACKTRACE: full
+      NIGHTLY_TAG: ${{ needs.prep.outputs.tag }}
 
     steps:
       - name: Enable long paths on windows
@@ -74,7 +75,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v2
         with:
-          repository: "denoland/deno"
+          repository: "maximousblk/deno"
           ref: ${{ needs.prep.outputs.head }}
           fetch-depth: 1 # No need for full version history
           submodules: true
@@ -90,34 +91,34 @@ jobs:
           deno-version: v1.2.2
 
       - name: Inject Custom version
-        run: deno run -A http://denopkg.com/maximousblk/deno_nightly/.github/inject.ts -b ${{ needs.prep.outputs.tag }}
+        run: deno run -A http://denopkg.com/maximousblk/deno_nightly_test/.github/inject.ts -b ${{ needs.prep.outputs.tag }}
 
       - name: Build
-        run: cargo build --release --locked --all-targets
+        run: cargo build --locked --all-targets
 
       - name: Zip linux release
         if: startsWith(matrix.os, 'ubuntu')
-        working-directory: target/release
+        working-directory: target/debug
         run: zip -r deno-nightly-x86_64-unknown-linux-gnu.zip deno
 
       - name: Zip mac release
         if: startsWith(matrix.os, 'macOS')
-        working-directory: target/release
+        working-directory: target/debug
         run: zip -r deno-nightly-x86_64-apple-darwin.zip deno
 
       - name: Zip windows release
         if: startsWith(matrix.os, 'windows')
-        working-directory: target/release
+        working-directory: target/debug
         run: Compress-Archive -CompressionLevel Optimal -Force -Path deno.exe -DestinationPath deno-nightly-x86_64-pc-windows-msvc.zip
 
       - name: Export Stable Type Docs
         if: startsWith(matrix.os, 'ubuntu')
-        working-directory: target/release
+        working-directory: target/debug
         run: ./deno types > lib.deno-nightly.d.ts
 
       - name: Export Unstable Type Docs
         if: startsWith(matrix.os, 'ubuntu')
-        working-directory: target/release
+        working-directory: target/debug
         run: ./deno types --unstable > lib.deno-nightly.unstable.d.ts
 
       - name: Upload Builds
@@ -125,11 +126,11 @@ jobs:
         with:
           name: release
           path: |
-            target/release/deno-nightly-x86_64-unknown-linux-gnu.zip
-            target/release/deno-nightly-x86_64-apple-darwin.zip
-            target/release/deno-nightly-x86_64-pc-windows-msvc.zip
-            target/release/lib.deno-nightly.d.ts
-            target/release/lib.deno-nightly.unstable.d.ts
+            target/debug/deno-nightly-x86_64-unknown-linux-gnu.zip
+            target/debug/deno-nightly-x86_64-apple-darwin.zip
+            target/debug/deno-nightly-x86_64-pc-windows-msvc.zip
+            target/debug/lib.deno-nightly.d.ts
+            target/debug/lib.deno-nightly.unstable.d.ts
 
   release:
     name: release / ${{ matrix.tag }}
