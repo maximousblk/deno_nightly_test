@@ -65,7 +65,8 @@ jobs:
     env:
       CARGO_INCREMENTAL: 0
       RUST_BACKTRACE: full
-      NIGHTLY_TAG: ${{ needs.prep.outputs.tag }}
+      DENO_NIGHTLY: ${{ needs.prep.outputs.tag }}
+      RELEASE_PROFILE: "nightly"
 
     steps:
       - name: Enable long paths on windows
