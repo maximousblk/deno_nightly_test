@@ -7,5 +7,5 @@ console.log({ build })
 const upgrade = await Deno.readTextFile("cli/upgrade.rs");
 await Deno.writeTextFile("cli/upgrade.rs", upgrade.replace(`crate::version::DENO`, `"0.0.1"`));
 
-const data = await Deno.readTextFile("cli/version.rs");
-await Deno.writeTextFile("cli/version.rs", data.replace(`env!("CARGO_PKG_VERSION")`, `"nightly ${build}"`));
+// const data = await Deno.readTextFile("cli/version.rs");
+// await Deno.writeTextFile("cli/version.rs", data.replace(`env!("CARGO_PKG_VERSION")`, `"nightly ${build}"`));
