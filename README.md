@@ -75,7 +75,7 @@ iwr https://deno.land/x/nightly/install.ps1 -useb | iex
 The program [`unzip`](https://linux.die.net/man/1/unzip) is a requirement for the Bash installer.
 
 ```sh
-$ curl -fsSL https://denonightly.now.sh/sh | sh
+$ curl -fsSL https://deno.land/x/nightly/install.sh | sh
 Error: unzip is required to install Deno (see: 'https://deno.land/x/nightly#unzip-is-required').
 ```
 
@@ -86,7 +86,3 @@ During the installation process, `unzip` is used to extract the zip archive.
 **How can this issue be fixed?**
 
 You can install unzip via `brew install unzip` on MacOS or `apt-get install unzip -y` on Linux.
-
-## License
-
-Deno is licensed under the [MIT License](https://github.com/denoland/deno/blob/master/LICENSE). The binaries and install scripts provided through this repository are also licensed under the same license
