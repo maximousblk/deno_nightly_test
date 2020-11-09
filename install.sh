@@ -8,7 +8,7 @@ if [ "$(uname -m)" != "x86_64" ]; then
 fi
 
 if ! command -v unzip >/dev/null; then
-  echo "Error: unzip is required to install Deno (Nightly) (see: 'https://denonightly.now.sh/#/?id=unzip-is-required')." 1>&2
+  echo "Error: unzip is required to install Deno (Nightly) (see: 'https://deno.land/x/nightly#unzip-is-required')." 1>&2
   exit 1
 fi
 
@@ -22,18 +22,9 @@ else
 fi
 
 if [ $# -eq 0 ]; then
-  deno_asset_path=$(
-    curl -sSf https://github.com/maximousblk/deno_nightly/releases |
-      grep -o "/maximousblk/deno_nightly/releases/download/.*/deno-nightly-${target}\\.zip" |
-      head -n 1
-  )
-  if [ ! "$deno_asset_path" ]; then
-    echo "Error: Unable to find latest Deno (Nightly) release on GitHub." 1>&2
-    exit 1
-  fi
-  deno_uri="https://github.com${deno_asset_path}"
+  deno_uri="https://github.com/maximousblk/nightly/releases/latest/download/deno-${target}.zip"
 else
-  deno_uri="https://github.com/maximousblk/deno_nightly/releases/download/${1}/deno-nightly-${target}.zip"
+  deno_uri="https://github.com/maximousblk/nightly/releases/download/${1}/deno-${target}.zip"
 fi
 
 deno_install="${DENO_INSTALL:-$HOME/.deno}"

@@ -1,9 +1,9 @@
-name: release
+name: ci
 
 on:
   workflow_dispatch: # manual trigger
   schedule:
-    - cron: "0 0 * * *" # Everyday at ~00:00 UTC
+    - cron: '0 0 * * *' # Everyday at ~00:00 UTC
 
 jobs:
   prep:
@@ -23,34 +23,34 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v2
         with:
-          repository: "maximousblk/deno"
-          fetch-depth: 1 # No need for full version history
+          repository: 'maximousblk/deno'
+          fetch-depth: 1
           submodules: false
 
-      - name: Get commit hash # For release notes
+      - name: Get commit hash # To keep every build on same commit
         id: commit
         run: echo "::set-output name=hash::$(git rev-parse HEAD)"
 
-      - name: Setup Deno
-        uses: denolib/setup-deno@v2
-        with:
-          deno-version: v1.2.2
+      # - name: Setup Deno
+      #   uses: denolib/setup-deno@v2
+      #   with:
+      #     deno-version: v1.5.2
 
-      - name: Generate Release Notes
-        run: |
-          deno run -A http://denopkg.com/maximousblk/deno_nightly_test/.github/dated.ts -h ${{ steps.commit.outputs.hash }} -b ${{ steps.now.outputs.formattedTime }}
-          deno run -A http://denopkg.com/maximousblk/deno_nightly_test/.github/latest.ts -h ${{ steps.commit.outputs.hash }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Generate Release Notes
+      #   run: |
+      #     deno run -A http://deno.land/x/nightly/.github/dated.ts -h ${{ steps.commit.outputs.hash }} -b ${{ steps.now.outputs.formattedTime }}
+      #     deno run -A http://deno.land/x/nightly/.github/latest.ts -h ${{ steps.commit.outputs.hash }}
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload release notes
-        uses: actions/upload-artifact@v2
-        with:
-          name: notes
-          path: |
-            ${{ steps.now.outputs.formattedTime }}.md
-            latest.md
-          if-no-files-found: error
+      # - name: Upload release notes
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     if-no-files-found: error
+      #     name: notes
+      #     path: |
+      #       ${{ steps.now.outputs.formattedTime }}.md
+      #       latest.md
 
   build:
     name: build / ${{ matrix.os }}
@@ -66,7 +66,8 @@ jobs:
       CARGO_INCREMENTAL: 0
       RUST_BACKTRACE: full
       DENO_NIGHTLY: ${{ needs.prep.outputs.tag }}
-      RELEASE_PROFILE: "nightly"
+      RELEASE_PROFILE: 'nightly'
+      CARGO_TERM_COLOR: always
 
     steps:
       - name: Enable long paths on windows
@@ -76,83 +77,66 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v2
         with:
-          repository: "maximousblk/deno"
+          repository: 'maximousblk/deno'
           ref: ${{ needs.prep.outputs.head }}
-          fetch-depth: 1 # No need for full version history
+          fetch-depth: 1
           submodules: true
 
       - name: Setup Rust
-        uses: hecrj/setup-rust-action@v1
+        uses: actions-rs/toolchain@v1
         with:
-          rust-version: 1.47.0
-
-#       - name: Setup Deno
-#         uses: denolib/setup-deno@v2
-#         with:
-#           deno-version: v1.2.2
-
-#       - name: Inject Custom version
-#         run: deno run -A http://denopkg.com/maximousblk/deno_nightly_test/.github/inject.ts -b ${{ needs.prep.outputs.tag }}
+          toolchain: 1.47.0
+          default: true
+          override: true
 
       - name: Build
-        run: cargo build --locked --all-targets
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --locked --all-targets
 
       - name: Zip linux release
         if: startsWith(matrix.os, 'ubuntu')
-        working-directory: target/debug
-        run: zip -r deno-nightly-x86_64-unknown-linux-gnu.zip deno
+        working-directory: target/release
+        run: zip -r deno-x86_64-unknown-linux-gnu.zip deno
 
       - name: Zip mac release
-        if: startsWith(matrix.os, 'macOS')
-        working-directory: target/debug
-        run: zip -r deno-nightly-x86_64-apple-darwin.zip deno
+        if: startsWith(matrix.os, 'macos')
+        working-directory: target/release
+        run: zip -r deno-x86_64-apple-darwin.zip deno
 
       - name: Zip windows release
         if: startsWith(matrix.os, 'windows')
-        working-directory: target/debug
-        run: Compress-Archive -CompressionLevel Optimal -Force -Path deno.exe -DestinationPath deno-nightly-x86_64-pc-windows-msvc.zip
+        working-directory: target/release
+        run: Compress-Archive -Path deno.exe -DestinationPath deno-x86_64-pc-windows-msvc.zip -CompressionLevel Optimal -Force
 
-      - name: Export Stable Type Docs
+      - name: Export Type Docs
         if: startsWith(matrix.os, 'ubuntu')
-        working-directory: target/debug
-        run: ./deno types > lib.deno-nightly.d.ts
-
-      - name: Export Unstable Type Docs
-        if: startsWith(matrix.os, 'ubuntu')
-        working-directory: target/debug
-        run: ./deno types --unstable > lib.deno-nightly.unstable.d.ts
+        working-directory: target/release
+        run: ./deno types > lib.deno.d.ts
 
       - name: Upload Builds
         uses: actions/upload-artifact@v2
         with:
           name: release
           path: |
-            target/debug/deno-nightly-x86_64-unknown-linux-gnu.zip
-            target/debug/deno-nightly-x86_64-apple-darwin.zip
-            target/debug/deno-nightly-x86_64-pc-windows-msvc.zip
-            target/debug/lib.deno-nightly.d.ts
-            target/debug/lib.deno-nightly.unstable.d.ts
+            target/release/deno-x86_64-unknown-linux-gnu.zip
+            target/release/deno-x86_64-apple-darwin.zip
+            target/release/deno-x86_64-pc-windows-msvc.zip
+            target/release/lib.deno.d.ts
 
   release:
-    name: release / ${{ matrix.tag }}
     needs: [prep, build]
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        tag: ["latest", "${{ needs.prep.outputs.tag }}"]
 
     steps:
       - name: Download Builds
         uses: actions/download-artifact@v2
 
-      - name: Release ${{ matrix.tag }}
+      - name: Release
         uses: ncipollo/release-action@v1
         with:
-          tag: "${{ matrix.tag }}"
-          name: "${{ matrix.tag }}"
-          prerelease: ${{ matrix.tag == 'latest' }}
-          allowUpdates: true
-          replacesArtifacts: true
-          artifacts: "release/*"
-          bodyFile: "notes/${{ matrix.tag }}.md"
+          tag: '${{ needs.prep.outputs.tag }}'
+          name: '${{ needs.prep.outputs.tag }}'
+          artifacts: 'release/*'
           token: ${{ secrets.GITHUB_TOKEN }}

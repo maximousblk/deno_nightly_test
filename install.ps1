@@ -24,27 +24,9 @@ $Target = 'x86_64-pc-windows-msvc'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $DenoUri = if (!$Version) {
-  $Response = Invoke-WebRequest 'https://github.com/maximousblk/deno_nightly/releases' -UseBasicParsing
-  if ($PSVersionTable.PSEdition -eq 'Core') {
-    $Response.Links |
-    Where-Object { $_.href -like "/maximousblk/deno_nightly/releases/download/*/deno-nightly-${Target}.zip" } |
-    ForEach-Object { 'https://github.com' + $_.href } |
-    Select-Object -First 1
-  } else {
-    $HTMLFile = New-Object -Com HTMLFile
-    if ($HTMLFile.IHTMLDocument2_write) {
-      $HTMLFile.IHTMLDocument2_write($Response.Content)
-    } else {
-      $ResponseBytes = [Text.Encoding]::Unicode.GetBytes($Response.Content)
-      $HTMLFile.write($ResponseBytes)
-    }
-    $HTMLFile.getElementsByTagName('a') |
-    Where-Object { $_.href -like "about:/maximousblk/deno_nightly/releases/download/*/deno-nightly-${Target}.zip" } |
-    ForEach-Object { $_.href -replace 'about:', 'https://github.com' } |
-    Select-Object -First 1
-  }
+  "https://github.com/maximousblk/nightly/releases/latest/download/deno-${Target}.zip"
 } else {
-  "https://github.com/maximousblk/deno_nightly/releases/download/${Version}/deno-nightly-${Target}.zip"
+  "https://github.com/maximousblk/nightly/releases/download/${Version}/deno-${Target}.zip"
 }
 
 if (!(Test-Path $BinDir)) {
@@ -67,6 +49,7 @@ Remove-Item $DenoZip
 
 $User = [EnvironmentVariableTarget]::User
 $Path = [Environment]::GetEnvironmentVariable('Path', $User)
+
 if (!(";$Path;".ToLower() -like "*;$BinDir;*".ToLower())) {
   [Environment]::SetEnvironmentVariable('Path', "$Path;$BinDir", $User)
   $Env:Path += ";$BinDir"
