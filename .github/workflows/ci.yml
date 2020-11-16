@@ -23,7 +23,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v2
         with:
-          repository: 'maximousblk/deno'
+          repository: 'crowlKats/deno'
           fetch-depth: 1
           submodules: false
 
@@ -65,9 +65,8 @@ jobs:
     env:
       CARGO_INCREMENTAL: 0
       RUST_BACKTRACE: full
-      DENO_NIGHTLY: ${{ needs.prep.outputs.tag }}
-      RELEASE_PROFILE: 'nightly'
       CARGO_TERM_COLOR: always
+      DENO_NIGHTLY: ${{ needs.prep.outputs.tag }}
 
     steps:
       - name: Enable long paths on windows
@@ -77,7 +76,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v2
         with:
-          repository: 'maximousblk/deno'
+          repository: 'crowlKats/deno'
           ref: ${{ needs.prep.outputs.head }}
           fetch-depth: 1
           submodules: true
