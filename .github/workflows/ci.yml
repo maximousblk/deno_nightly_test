@@ -24,6 +24,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: 'crowlKats/deno'
+          ref: nightly_upgrade
           fetch-depth: 1
           submodules: false
 
@@ -31,26 +32,24 @@ jobs:
         id: commit
         run: echo "::set-output name=hash::$(git rev-parse HEAD)"
 
-      # - name: Setup Deno
-      #   uses: denolib/setup-deno@v2
-      #   with:
-      #     deno-version: v1.5.2
+      - name: Setup Deno
+        uses: denolib/setup-deno@v2
+        with:
+          deno-version: v1.5.2
 
-      # - name: Generate Release Notes
-      #   run: |
-      #     deno run -A http://deno.land/x/nightly/.github/dated.ts -h ${{ steps.commit.outputs.hash }} -b ${{ steps.now.outputs.formattedTime }}
-      #     deno run -A http://deno.land/x/nightly/.github/latest.ts -h ${{ steps.commit.outputs.hash }}
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate Release Notes
+        run: deno run -A https://github.com/maximousblk/nightly/raw/master/.github/notes.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.now.outputs.formattedTime }}
+          HEAD_COMMIT: ${{ steps.commit.outputs.hash }}
 
-      # - name: Upload release notes
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     if-no-files-found: error
-      #     name: notes
-      #     path: |
-      #       ${{ steps.now.outputs.formattedTime }}.md
-      #       latest.md
+      - name: Upload release notes
+        uses: actions/upload-artifact@v2
+        with:
+          if-no-files-found: error
+          name: notes
+          path: notes.md
 
   build:
     name: build / ${{ matrix.os }}
@@ -129,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Builds
+      - name: Download Artifacts
         uses: actions/download-artifact@v2
 
       - name: Release
@@ -138,4 +137,5 @@ jobs:
           tag: '${{ needs.prep.outputs.tag }}'
           name: '${{ needs.prep.outputs.tag }}'
           artifacts: 'release/*'
+          bodyFile: 'notes/notes.md'
           token: ${{ secrets.GITHUB_TOKEN }}
